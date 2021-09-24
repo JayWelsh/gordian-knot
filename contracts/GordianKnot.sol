@@ -48,19 +48,18 @@ contract GordianKnot is AccessControl {
     function getPercentageOf(
         uint256 _amount,
         uint16 _basisPoints
-    ) internal pure returns (uint256 share) {
-        share = (_amount * _basisPoints) / 10000;
+    ) internal pure returns (uint256 value) {
+        value = (_amount * _basisPoints) / 10000;
     }
 
-    function fastenKnot(address _oxCartAddress, address _entanglementAddress) external {
+    function fastenKnot(address _oxCartAddress) external {
         require(_oxCartAddress != address(0), "_oxCartAddress may not be zero address");
-        require(_entanglementAddress != address(0), "_entangledAddress may not be zero address");
-        require(oxCartToEntanglementAddressToBasisPoints[_oxCartAddress][_entanglementAddress] != 0, "_oxCartAddress and _entanglementAddress are not entangled.");
+        require(oxCartToEntanglementAddress[_oxCartAddress] != address(0), "_oxCartAddress is not entangled with an entanglement address.");
         require(oxCartToEntanglementAddressToHiatusValue[_oxCartAddress][oxCartToEntanglementAddress[_oxCartAddress]] > 0, "Knot already fastened.");
-        uint256 entanglementCut = getPercentageOf(oxCartToEntanglementAddressToHiatusValue[_oxCartAddress][oxCartToEntanglementAddress[_oxCartAddress]], oxCartToEntanglementAddressToBasisPoints[_oxCartAddress][_entanglementAddress]);
+        uint256 entanglementCut = getPercentageOf(oxCartToEntanglementAddressToHiatusValue[_oxCartAddress][oxCartToEntanglementAddress[_oxCartAddress]], oxCartToEntanglementAddressToBasisPoints[_oxCartAddress][oxCartToEntanglementAddress[_oxCartAddress]]);
         console.log("entanglementCut", entanglementCut);
         uint256 gordianCut = oxCartToEntanglementAddressToHiatusValue[_oxCartAddress][oxCartToEntanglementAddress[_oxCartAddress]] - entanglementCut;
-        (bool entanglementDeliverySuccess, ) = _entanglementAddress.call{value: entanglementCut}("");
+        (bool entanglementDeliverySuccess, ) = oxCartToEntanglementAddress[_oxCartAddress].call{value: entanglementCut}("");
         require(entanglementDeliverySuccess, "Entanglement cut delivery unsuccessful.");
         (bool gordianDeliverySuccess, ) = gordias.call{value: gordianCut}("");
         require(gordianDeliverySuccess, "Gordian cut delivery unsuccessful.");

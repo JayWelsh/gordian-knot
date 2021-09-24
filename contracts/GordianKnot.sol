@@ -5,7 +5,7 @@ import "@openzeppelin/contracts/access/AccessControl.sol";
 
 import "hardhat/console.sol";
 
-contract GordianKnotMultiParty is AccessControl {
+contract GordianKnot is AccessControl {
 
     // Create a new role identifier for the ORACLE role
     // Can create new entanglements & adjust the address of gordias

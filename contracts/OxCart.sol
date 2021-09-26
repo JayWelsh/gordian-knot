@@ -8,7 +8,7 @@ contract OxCart {
     gordianKnot = _gordianKnot;
   }
   
-  fallback () external payable {
+  receive() external payable {
     (bool deliverySuccess, ) = gordianKnot.call{value: address(this).balance}("");
     require(deliverySuccess, "Ox cart delivery unsuccessful.");
   }

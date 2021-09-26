@@ -48,7 +48,7 @@ There are four contracts which form part of this system, as follows:
 
 - OxCart contracts act as automated Ethereum-native couriers of ETH from one Ethereum address (the OxCart contract address) to another (the GordianKnot contract address).
 
-- When an OxCart contract is deployed, the address of the GordianKnot contract which it will handle deliveries to is provided to it.
+- The address of a GordianKnot must be supplied to the OxCart contract constructor upon deployment, this is the address that the OxCart will handle deliveries to.
 
 - When OxCart contracts receive ETH via transactions, they will automatically forward any ETH received onto the GordianKnot contract, the GordianKnot contract will detect which address the OxCart address that the ETH came from and will map the OxCart delivery to an entanglement.
 

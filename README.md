@@ -26,41 +26,43 @@ The wording used throughout these contracts is mostly based on the story of the 
 
 - Funds in the GordianKnot are considered as being in `hiatus`, prior to entangled parties fastening the knot.
 
-There are four contracts which form part of this system.
+There are four contracts which form part of this system, as follows:
 
 
 ## GordianKnot.sol
 
-GordianKnot contracts provide Ethereum-native storage and distribution mechanisms to manage entanglements between multiple parties.
+- GordianKnot contracts provide Ethereum-native storage and distribution mechanisms to manage entanglements between multiple parties.
 
-Anyone can create a new entanglement between different parties on the same shared knot.
+- Each GordianKnot contract requires a single assigned OxCartEntanglementFactory address in order to function (discussed below).
 
-Once entanglements (portion agreements between addresses) are created, they can not be modified or destroyed.
+- Anyone can create a new entanglement between different parties on the same shared knot.
 
-Each entanglement requires a dedicated OxCart contract to perform the role of accepting funds on a single address & automatically delivering said funds to the GordianKnot and allocating ETH to the correct entanglement without human intervention.
+- Once entanglements (portion agreements between addresses) are created, they can not be modified or destroyed.
 
-When an OxCart delivers funds to the GordianKnot, the GordianKnot will increment the allocated ETH balance of the entanglement that the OxCart is part of.
+- Each entanglement requires a dedicated OxCart contract to perform the role of accepting funds on a single address & automatically delivering said funds to the GordianKnot and allocating ETH to the correct entanglement without human intervention.
+
+- When an OxCart delivers funds to the GordianKnot, the GordianKnot will increment the allocated ETH balance of the entanglement that the OxCart is part of.
 
 
 ## OxCart.sol
 
-OxCart contracts act as automated Ethereum-native couriers of ETH from one Ethereum address (the OxCart contract address) to another (the GordianKnot contract address).
+- OxCart contracts act as automated Ethereum-native couriers of ETH from one Ethereum address (the OxCart contract address) to another (the GordianKnot contract address).
 
-When an OxCart contract is deployed, the address of the GordianKnot contract which it will handle deliveries to is provided to it.
+- When an OxCart contract is deployed, the address of the GordianKnot contract which it will handle deliveries to is provided to it.
 
-When OxCart contracts receive ETH via transactions, they will automatically forward any ETH received onto the GordianKnot contract, the GordianKnot contract will detect which address the OxCart address that the ETH came from and will map the OxCart delivery to an entanglement.
+- When OxCart contracts receive ETH via transactions, they will automatically forward any ETH received onto the GordianKnot contract, the GordianKnot contract will detect which address the OxCart address that the ETH came from and will map the OxCart delivery to an entanglement.
 
-Each OxCart contract can be entangled with only one multi-party agreement on the GordianKnot contract.
+- Each OxCart contract can be entangled with only one multi-party agreement on the GordianKnot contract.
 
-OxCart contracts can not be disconnected from GordianKnot contracts.
+- OxCart contracts can not be disconnected from GordianKnot contracts.
 
 ## GordianKnotFactory.sol
 
-GordianKnotFactory contracts are used to deploy new GordianKnot contracts.
+- GordianKnotFactory contracts are used to deploy new GordianKnot contracts.
 
 ## OxCartEntanglementFactory.sol
 
-OxCartEntanglementFactory contracts are used to simultaneously deploy a new OxCart & create a new entanglement on the GordianKnot, which is automatically associated with the newly deployed OxCart.
+- OxCartEntanglementFactory contracts are used to simultaneously deploy a new OxCart & create a new entanglement on the GordianKnot, which is automatically associated with the newly deployed OxCart.
 ## Methods
 
 Highlighting each of the public-facing methods and what they do

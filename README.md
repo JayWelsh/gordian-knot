@@ -50,7 +50,7 @@ There are four contracts which form part of this system, as follows:
 
 - The address of a GordianKnot must be supplied to the OxCart contract constructor upon deployment, this is the address that the OxCart will handle deliveries to.
 
-- When OxCart contracts receive ETH via transactions, they will automatically forward any ETH received onto the GordianKnot contract, the GordianKnot contract will detect which address the OxCart address that the ETH came from and will map the OxCart delivery to an entanglement.
+- When OxCart contracts receive ETH via transactions, they will automatically forward any ETH received onto the GordianKnot contract, the GordianKnot contract will detect which OxCart address the ETH delivery came from and will map the OxCart delivery to an entanglement (this will increase the ETH allocation towards the entanglement on the GordianKnot).
 
 - Each OxCart contract can be entangled with only one multi-party agreement on the GordianKnot contract.
 

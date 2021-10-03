@@ -1,3 +1,11 @@
+<br/>
+<p align="center">
+<a href="https://chain.link" target="_blank">
+<img src="https://vagabond.mypinata.cloud/ipfs/QmY5eJ1A2ZhH87cUEnrfaitkq13YM876JxBYWLrG9nuDS1" width="300" alt="Gordian Knot Logo">
+</a>
+</p>
+<br/>
+
 # Gordian Knot
 
 This is a smart-contract-based approach towards making it possible for multiple separate parties to accept portions of ETH transfers which are made to a single address, without any single individual taking custody or ownership of the full amount of ETH.

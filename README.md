@@ -33,8 +33,6 @@ There are four contracts which form part of this system, as follows:
 
 - GordianKnot contracts provide Ethereum-native storage and distribution mechanisms to manage entanglements between multiple parties.
 
-- Each GordianKnot contract requires a single assigned OxCartEntanglementFactory address in order to function (discussed below).
-
 - Anyone can create a new entanglement between different parties on the same shared knot.
 
 - Once entanglements (portion agreements between addresses) are created, they can not be modified or destroyed.
@@ -42,6 +40,8 @@ There are four contracts which form part of this system, as follows:
 - Each entanglement requires a dedicated OxCart contract to perform the role of accepting funds on a single address & automatically delivering said funds to the GordianKnot and allocating ETH to the correct entanglement without human intervention.
 
 - When an OxCart delivers funds to the GordianKnot, the GordianKnot will increment the allocated ETH balance of the entanglement that the OxCart is part of.
+
+- When a user creates a new entanglement, a new OxCart contract is simultaneously deployed & associated with the new GordianKnot entanglement.
 
 
 ## OxCart.sol
@@ -56,19 +56,17 @@ There are four contracts which form part of this system, as follows:
 
 - OxCart contracts can not be disconnected from GordianKnot contracts.
 
+
 ## GordianKnotFactory.sol
 
 - GordianKnotFactory contracts are used to deploy new GordianKnot contracts.
 
-## OxCartEntanglementFactory.sol
 
-- OxCartEntanglementFactory contracts are used to simultaneously deploy a new OxCart & create a new entanglement on the GordianKnot, which is automatically associated with the newly deployed OxCart.
 ## Methods
 
 Highlighting each of the public-facing methods and what they do
 
-
-### OxCartEntanglementFactory.newOxCartAndEntanglement
+### GordianKnot.newOxCartAndEntanglement
 
 ```solidity
 function newOxCartAndEntanglement(
@@ -77,7 +75,7 @@ function newOxCartAndEntanglement(
 ) external;
 ```
 
-This method is used to create a new OxCart contract (ETH receiving address), a set of addresses with their own basis point allocations are automatically entangled with it on the GordianKnot contract.
+This method is used to create a new entanglement along with a new OxCart contract (ETH receiving address), the provided set of addresses and their respective basis point allocations are automatically entangled with the new OxCart contract address on the GordianKnot contract.
 
 Each entanglementAddress must have a corresponding basisPoint allocation (e.g. 10000 = 100%, 5000 = 50%).
 
@@ -91,6 +89,7 @@ newOxCartAndEntanglement(
   [7500, 2500]
 );
 ```
+
 
 ### GordianKnot.fastenKnot
 
@@ -110,24 +109,7 @@ fastenKnot(
 );
 ```
 
-### GordianKnot.setOxCartEntanglementFactory
-
-```solidity
-function setOxCartEntanglementFactory(
-  address _oxCartEntanglementFactory
-) external;
-```
-
-For those who are deploying their own `GordianKnot.sol` contracts, e.g. via the `GordianKnotFactory.sol` contract or manually, the GordianKnot must be linked to an `OxCartEntanglementFactory.sol` contract address in order to function. This `setOxCartEntanglementFactory` function is used to hook the GordianKnot up to an `OxCartEntanglementFactory.sol` contract. Once the address of the `OxCartEntanglementFactory.sol` contract is set, it can not be changed. The provided `_oxCartEntanglementFactory` is the only address which is allowed to call the `newEntanglement` method within the GordianKnot.
-
-Example pseudo usage:
-
-```solidity
-setOxCartEntanglementFactory(
-  0x0000000000000000000000000000000000000000,
-);
-```
 
 ### GordianKnotFactory.newGordianKnot
 
-This can be used to create a new GordianKnot contract, after creating a new GordianKnot contract, it is important to deploy a `OxCartEntanglementFactory.sol` (or similar) contract and subsequently call the `GordianKnot.setOxCartEntanglementFactory` method to complete the process of deploying the new GordianKnot.
+This can be used to create a new GordianKnot contract.

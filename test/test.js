@@ -4,11 +4,25 @@ const { ethers } = require("hardhat");
 describe("GordianKnot Test Suite", function () {
 
   // Common variables
-  let gordianKnot, gordianKnotAddress, oxCartEntanglementFactory, oxCartEntanglementFactoryAddress;
-  let deployer, entanglement1, entanglement2, entanglement3, patron;
+  let gordianKnot, gordianKnotAddress;
+  let deployer, entanglement1, entanglement2, entanglement3, entanglement4, entanglement5, entanglement6, entanglement7, entanglement8, entanglement9, entanglement10;
+  let patron;
 
   beforeEach(async function () {
-    [deployer, entanglement1, entanglement2, entanglement3, patron] = await hre.ethers.getSigners();
+    [
+      deployer,
+      entanglement1,
+      entanglement2,
+      entanglement3,
+      entanglement4,
+      entanglement5,
+      entanglement6,
+      entanglement7,
+      entanglement8,
+      entanglement9,
+      entanglement10,
+      patron
+    ] = await hre.ethers.getSigners();
   })
 
   context("GordianKnotFactory.sol", async function () {
@@ -24,27 +38,6 @@ describe("GordianKnot Test Suite", function () {
 
     });
 
-    it("Should allow an OxCartEntanglementFactory to be set as the OxCartEntanglementFactory of the Gordian Knot", async function () {
-      // Create a new Gordian Knot Factory and then a new Gordian Knot
-      const GordianKnotFactory = await ethers.getContractFactory("GordianKnotFactory");
-      const gordianKnotFactory = await GordianKnotFactory.deploy();
-      await gordianKnotFactory.deployed();
-      let newGordianKnotTx = await gordianKnotFactory.newGordianKnot();
-      let newGordianKnotReturnData = await newGordianKnotTx.wait();
-      let newGordianKnotAddress = ethers.utils.hexStripZeros(newGordianKnotReturnData.logs[0].topics[2]);
-      let gordianKnotContract = await ethers.getContractFactory("GordianKnot");
-      let gordianKnotAttached = await gordianKnotContract.attach(newGordianKnotAddress)
-      // Create a new OxCart factory
-      const OxCartEntanglementFactory = await ethers.getContractFactory("OxCartEntanglementFactory");
-      let oxCartEntanglementFactoryLocal = await OxCartEntanglementFactory.deploy(newGordianKnotAddress);
-      await oxCartEntanglementFactoryLocal.deployed();
-      let oxCartEntanglementFactoryAddressLocal = oxCartEntanglementFactoryLocal.address;
-
-      // Hook the OxCartEntanglementFactory up to the Gordian Knot
-      await expect(
-        gordianKnotAttached.setOxCartEntanglementFactory(oxCartEntanglementFactoryAddressLocal)
-      ).to.emit(gordianKnotAttached, "OxCartEntanglementFactoryConnected").withArgs(oxCartEntanglementFactoryAddressLocal);
-    })
   });
 
   context("After GordianKnotFactory.sol & OxCartEntanglementFactory.sol deployment and connection", async function () {
@@ -68,73 +61,51 @@ describe("GordianKnot Test Suite", function () {
       gordianKnot = await gordianKnotContract.attach(newGordianKnotAddress)
       gordianKnotAddress = newGordianKnotAddress;
 
-      // Create a new OxCart factory
-      const OxCartEntanglementFactory = await ethers.getContractFactory("OxCartEntanglementFactory");
-      oxCartEntanglementFactory = await OxCartEntanglementFactory.deploy(newGordianKnotAddress);
-      await oxCartEntanglementFactory.deployed();
-
-      oxCartEntanglementFactoryAddress = oxCartEntanglementFactory.address;
-
-      // Hook the OxCartEntanglementFactory up to the Gordian Knot
-      await gordianKnot.setOxCartEntanglementFactory(oxCartEntanglementFactoryAddress);
     })
-
-    context("OxCartEntanglementFactory.sol", async function () {
-      it("Should allow a new OxCart and Entanglement to be created", async function () {
-        await expect(
-          oxCartEntanglementFactory.newOxCartAndEntanglement([entanglement1.address, entanglement2.address, entanglement3.address], [5000, 2500, 2500])
-        ).to.emit(oxCartEntanglementFactory, "OxCartAndEntanglementCreated")
-      })
-      it("Should emit an event from GordianKnot.sol for each entanglement address passed to newOxCartAndEntanglement", async function () {
-        let entanglementAddresses = [entanglement1.address, entanglement2.address, entanglement3.address];
-        let entanglementAddressPortions = [5000, 2500, 2500];
-        let newOxCartAndEntanglementTx = await oxCartEntanglementFactory.newOxCartAndEntanglement(entanglementAddresses, entanglementAddressPortions);
-        let newOxCartAndEntanglementTxResponse = await newOxCartAndEntanglementTx.wait();
-        let oxCartAddress = newOxCartAndEntanglementTxResponse.events[3].args.oxCartAddress;
-        let gordianKnotEvents = newOxCartAndEntanglementTxResponse.events.slice(0, 3);
-        for (let [index, event] of gordianKnotEvents.entries()) {
-          await expect(ethers.utils.getAddress(ethers.utils.hexStripZeros(event.topics[1]))).to.equal(oxCartAddress);
-          await expect(ethers.utils.getAddress(ethers.utils.hexStripZeros(event.topics[2]))).to.equal(entanglementAddresses[index]);
-          await expect(Number(event.topics[3])).to.equal(entanglementAddressPortions[index]);
-        }
-      })
-      it("Should revert if entanglementAddresses & basisPoints arrays are not equal length", async function () {
-        let entanglementAddresses = [entanglement1.address, entanglement2.address, entanglement3.address];
-        let entanglementAddressPortions = [5000, 2500, 2400, 100];
-        await expect (
-          oxCartEntanglementFactory.newOxCartAndEntanglement(entanglementAddresses, entanglementAddressPortions)
-        ).to.be.revertedWith("Length of _entanglementAddresses and _basisPoints arrays must be equal")
-      })
-      it("Should revert if entanglementAddress array is empty", async function () {
-        let entanglementAddresses = [];
-        let entanglementAddressPortions = [5000, 2500, 2500];
-        await expect (
-          oxCartEntanglementFactory.newOxCartAndEntanglement(entanglementAddresses, entanglementAddressPortions)
-        ).to.be.revertedWith("Length of _entanglementAddresses must be more than zero")
-      })
-    });
 
     context("GordianKnot.sol", async function () {
 
-      it("Should return the OxCartEntanglementFactory that it is connected to", async function () {
-        let hookedUpOxCartAddress = await gordianKnot.oxCartEntanglementFactory();
-        expect(hookedUpOxCartAddress).to.equal(oxCartEntanglementFactoryAddress);
-      });
+      context("newOxCartAndEntanglement", async function () {
 
-      it("Should not allow the newEntanglement method to be called directly", async function () {
-        await expect(
-          gordianKnot.newEntanglement(
-            oxCartEntanglementFactoryAddress,
-            [entanglement1.address, entanglement2.address, entanglement3.address],
-            [7500, 2000, 500]
-          )
-        ).to.be.revertedWith("Only the OxCartEntanglementFactory contract may create new entanglements");
+        it("Should allow a new OxCart and Entanglement to be created", async function () {
+          await expect(
+            gordianKnot.newOxCartAndEntanglement([entanglement1.address, entanglement2.address, entanglement3.address], [5000, 2500, 2500])
+          ).to.emit(gordianKnot, "OxCartAndEntanglementCreated")
+        })
+        it("Should emit an event from GordianKnot.sol for each entanglement address passed to newOxCartAndEntanglement", async function () {
+          let entanglementAddresses = [entanglement1.address, entanglement2.address, entanglement3.address];
+          let entanglementAddressPortions = [5000, 2500, 2500];
+          let newOxCartAndEntanglementTx = await gordianKnot.newOxCartAndEntanglement(entanglementAddresses, entanglementAddressPortions);
+          let newOxCartAndEntanglementTxResponse = await newOxCartAndEntanglementTx.wait();
+          let oxCartAddress = newOxCartAndEntanglementTxResponse.events[3].args.oxCartAddress;
+          let gordianKnotEvents = newOxCartAndEntanglementTxResponse.events.slice(0, 3);
+          for (let [index, event] of gordianKnotEvents.entries()) {
+            await expect(ethers.utils.getAddress(ethers.utils.hexStripZeros(event.topics[1]))).to.equal(oxCartAddress);
+            await expect(ethers.utils.getAddress(ethers.utils.hexStripZeros(event.topics[2]))).to.equal(entanglementAddresses[index]);
+            await expect(Number(event.topics[3])).to.equal(entanglementAddressPortions[index]);
+          }
+        })
+        it("Should revert if entanglementAddresses & basisPoints arrays are not equal length", async function () {
+          let entanglementAddresses = [entanglement1.address, entanglement2.address, entanglement3.address];
+          let entanglementAddressPortions = [5000, 2500, 2400, 100];
+          await expect (
+            gordianKnot.newOxCartAndEntanglement(entanglementAddresses, entanglementAddressPortions)
+          ).to.be.revertedWith("Length of _entanglementAddresses and _basisPoints arrays must be equal")
+        })
+        it("Should revert if entanglementAddress array is empty", async function () {
+          let entanglementAddresses = [];
+          let entanglementAddressPortions = [5000, 2500, 2500];
+          await expect (
+            gordianKnot.newOxCartAndEntanglement(entanglementAddresses, entanglementAddressPortions)
+          ).to.be.revertedWith("Length of _entanglementAddresses must be more than zero")
+        })
+
       });
 
       it("Should properly distribute ETH to entangled addresses based on their defined portions", async function () {
         let entanglementAddresses = [entanglement1.address, entanglement2.address, entanglement3.address];
         let entanglementAddressPortions = [5000, 4000, 1000];
-        let newOxCartAndEntanglementTx = await oxCartEntanglementFactory.newOxCartAndEntanglement(entanglementAddresses, entanglementAddressPortions);
+        let newOxCartAndEntanglementTx = await gordianKnot.newOxCartAndEntanglement(entanglementAddresses, entanglementAddressPortions);
         let newOxCartAndEntanglementTxResponse = await newOxCartAndEntanglementTx.wait();
         let oxCartAddress = newOxCartAndEntanglementTxResponse.events[3].args.oxCartAddress;
 
@@ -180,10 +151,34 @@ describe("GordianKnot Test Suite", function () {
       
       });
 
+      it("Should return a valid entanglement via getEntanglement", async function () {
+        let entanglementAddresses = [entanglement1.address, entanglement2.address, entanglement3.address];
+        let entanglementAddressPortions = [5000, 4000, 1000];
+        let newOxCartAndEntanglementTx = await gordianKnot.newOxCartAndEntanglement(entanglementAddresses, entanglementAddressPortions);
+        let newOxCartAndEntanglementTxResponse = await newOxCartAndEntanglementTx.wait();
+        let oxCartAddress = newOxCartAndEntanglementTxResponse.events[3].args.oxCartAddress;
+
+        // Fetch the entanglement
+        let fetchedEntanglement = await gordianKnot.getEntanglement(oxCartAddress);
+
+        for(let [index, entanglementAddress] of entanglementAddresses.entries()) {
+          await expect(
+            fetchedEntanglement[0][index]
+          ).to.equal(entanglementAddress)
+        }
+
+        for(let [index, entanglementAddressPortion] of entanglementAddressPortions.entries()) {
+          await expect(
+            fetchedEntanglement[1][index]
+          ).to.equal(entanglementAddressPortion)
+        }
+
+      });
+
       it("Should revert if knot is already fastened", async function () {
         let entanglementAddresses = [entanglement1.address, entanglement2.address, entanglement3.address];
         let entanglementAddressPortions = [5000, 4000, 1000];
-        let newOxCartAndEntanglementTx = await oxCartEntanglementFactory.newOxCartAndEntanglement(entanglementAddresses, entanglementAddressPortions);
+        let newOxCartAndEntanglementTx = await gordianKnot.newOxCartAndEntanglement(entanglementAddresses, entanglementAddressPortions);
         let newOxCartAndEntanglementTxResponse = await newOxCartAndEntanglementTx.wait();
         let oxCartAddress = newOxCartAndEntanglementTxResponse.events[3].args.oxCartAddress;
 
@@ -209,7 +204,7 @@ describe("GordianKnot Test Suite", function () {
         let entanglementAddresses = [entanglement1.address, entanglement2.address, entanglement3.address];
         let entanglementAddressPortions = [5000, 4000, 2000];
         await expect(
-          oxCartEntanglementFactory.newOxCartAndEntanglement(entanglementAddresses, entanglementAddressPortions)
+          gordianKnot.newOxCartAndEntanglement(entanglementAddresses, entanglementAddressPortions)
         ).to.be.revertedWith("_basisPoints must add up to 10000 together.");
       });
 
@@ -217,7 +212,7 @@ describe("GordianKnot Test Suite", function () {
         let entanglementAddresses = [entanglement1.address, entanglement2.address, entanglement3.address];
         let entanglementAddressPortions = [10001, 4000, 2000];
         await expect(
-          oxCartEntanglementFactory.newOxCartAndEntanglement(entanglementAddresses, entanglementAddressPortions)
+          gordianKnot.newOxCartAndEntanglement(entanglementAddresses, entanglementAddressPortions)
         ).to.be.revertedWith("_basisPoints may not be 0 and may not exceed 10000 (100%)");
       });
 
@@ -225,7 +220,7 @@ describe("GordianKnot Test Suite", function () {
         let entanglementAddresses = [entanglement1.address, entanglement2.address, entanglement3.address];
         let entanglementAddressPortions = [5000, 4000, 0];
         await expect(
-          oxCartEntanglementFactory.newOxCartAndEntanglement(entanglementAddresses, entanglementAddressPortions)
+          gordianKnot.newOxCartAndEntanglement(entanglementAddresses, entanglementAddressPortions)
         ).to.be.revertedWith("_basisPoints may not be 0 and may not exceed 10000 (100%)");
       });
 
@@ -247,12 +242,12 @@ describe("GordianKnot Test Suite", function () {
 
       });
 
-      it("Should revert if an attempt is made to call setOxCartEntanglementFactory after it is already set", async function () {
-      
-        // Pass zero address to fastenKnot method
+      it("Should revert if requesting an invalid OxCart via getEntanglement", async function () {
+        
+        // Try to fetch an invalid entanglement
         await expect(
-          gordianKnot.setOxCartEntanglementFactory("0x0000000000000000000000000000000000000000")
-        ).to.be.revertedWith("oxCartEntanglementFactory address can only be set once (already set).");
+          gordianKnot.getEntanglement("0x0000000000000000000000000000000000000000")
+        ).to.be.revertedWith("_oxCartAddress is not associated with an entanglement.");
 
       });
 

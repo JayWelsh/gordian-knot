@@ -27,13 +27,18 @@ describe("GordianKnot Test Suite", function () {
 
   context("GordianKnotFactory.sol", async function () {
     it("Should allow a new GordianKnot to be created", async function () {
+
+      // Deploy an OxCart to use for cloning
+      const OxCartClonable = await ethers.getContractFactory("OxCart");
+      const oxCartClonable = await OxCartClonable.deploy();
+
       // Create a new Gordian Knot Factory and then a new Gordian Knot
       const GordianKnotFactory = await ethers.getContractFactory("GordianKnotFactory");
       const gordianKnotFactory = await GordianKnotFactory.deploy();
       await gordianKnotFactory.deployed();
 
       await expect(
-        gordianKnotFactory.newGordianKnot()
+        gordianKnotFactory.newGordianKnot(oxCartClonable.address)
       ).to.emit(gordianKnotFactory, "GordianKnotDeployed")
 
     });
@@ -44,12 +49,15 @@ describe("GordianKnot Test Suite", function () {
 
     beforeEach(async () => {
 
+      // Deploy an OxCart to use for cloning
+      const OxCartClonable = await ethers.getContractFactory("OxCart");
+      const oxCartClonable = await OxCartClonable.deploy();
+
       // Create a new Gordian Knot Factory and then a new Gordian Knot
       const GordianKnotFactory = await ethers.getContractFactory("GordianKnotFactory");
       const gordianKnotFactory = await GordianKnotFactory.deploy();
-      await gordianKnotFactory.deployed();
 
-      let newGordianKnotTx = await gordianKnotFactory.newGordianKnot();
+      let newGordianKnotTx = await gordianKnotFactory.newGordianKnot(oxCartClonable.address);
 
       let newGordianKnotReturnData = await newGordianKnotTx.wait();
 
@@ -79,9 +87,11 @@ describe("GordianKnot Test Suite", function () {
           let newOxCartAndEntanglementTxResponse = await newOxCartAndEntanglementTx.wait();
           let oxCartAddress = newOxCartAndEntanglementTxResponse.events[3].args.oxCartAddress;
           let gordianKnotEvents = newOxCartAndEntanglementTxResponse.events.slice(0, 3);
+          console.log({gordianKnotEvents})
           for (let [index, event] of gordianKnotEvents.entries()) {
-            await expect(ethers.utils.getAddress(ethers.utils.hexStripZeros(event.topics[1]))).to.equal(oxCartAddress);
-            await expect(ethers.utils.getAddress(ethers.utils.hexStripZeros(event.topics[2]))).to.equal(entanglementAddresses[index]);
+            console.log({eventTopics: event.topics})
+            await expect(ethers.utils.getAddress(ethers.utils.hexDataSlice(event.topics[1], 12))).to.equal(oxCartAddress);
+            await expect(ethers.utils.getAddress(ethers.utils.hexDataSlice(event.topics[2], 12))).to.equal(entanglementAddresses[index]);
             await expect(Number(event.topics[3])).to.equal(entanglementAddressPortions[index]);
           }
         })

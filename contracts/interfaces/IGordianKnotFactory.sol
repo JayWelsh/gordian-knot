@@ -5,6 +5,6 @@ interface IGordianKnotFactory {
 
   event GordianKnotDeployed(address indexed knotDeployer, address indexed knotAddress);
   
-  function newGordianKnot() external returns(address);
+  function newGordianKnot(address _referenceOxCart) external returns(address);
 
 }

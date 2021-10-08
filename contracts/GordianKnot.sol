@@ -38,28 +38,30 @@ contract GordianKnot {
         uint256 totalBasisPoints;
         for(uint256 i = 0; i < _entanglementAddresses.length; i++) {
             require((_basisPoints[i] > 0) && (_basisPoints[i] <= 10000), "_basisPoints may not be 0 and may not exceed 10000 (100%)");
-            oxCartToEntanglementAddresses[_oxCartAddress].push(_entanglementAddresses[i]);
             oxCartToEntanglementAddressToBasisPoints[_oxCartAddress][_entanglementAddresses[i]] = _basisPoints[i];
             totalBasisPoints += _basisPoints[i];
             emit NewEntanglement(_oxCartAddress, _entanglementAddresses[i], _basisPoints[i], _entanglementAddresses, _basisPoints);
         }
         require(totalBasisPoints == 10000, "_basisPoints must add up to 10000 together.");
+        oxCartToEntanglementAddresses[_oxCartAddress] = _entanglementAddresses; // Set this outside of the for loop to save gas
     }
 
     function fastenKnot(address _oxCartAddress) external {
         require(_oxCartAddress != address(0), "_oxCartAddress may not be zero address.");
-        require(oxCartToEntanglementAddresses[_oxCartAddress].length > 0, "_oxCartAddress is not associated with an entanglement.");
-        require(oxCartToToHiatusValue[_oxCartAddress] > 0, "Knot already fastened.");
+        address[] memory oxCartToEntanglementAddressesMemory = oxCartToEntanglementAddresses[_oxCartAddress]; // Load into memory to save some gas
+        require(oxCartToEntanglementAddressesMemory.length > 0, "_oxCartAddress is not associated with an entanglement.");
+        uint256 hiatusValue = oxCartToToHiatusValue[_oxCartAddress]; // Load into memory to save gas
+        require(hiatusValue > 0, "Knot already fastened.");
         uint256 entanglementCutsTotal;
-        for(uint256 i = 0; i < oxCartToEntanglementAddresses[_oxCartAddress].length; i++) {
+        for(uint256 i = 0; i < oxCartToEntanglementAddressesMemory.length; i++) {
             uint256 entanglementCut;
-            if(i < (oxCartToEntanglementAddresses[_oxCartAddress].length - 1)) {
-                entanglementCut = getPercentageOf(oxCartToToHiatusValue[_oxCartAddress], oxCartToEntanglementAddressToBasisPoints[_oxCartAddress][oxCartToEntanglementAddresses[_oxCartAddress][i]]);
+            if(i < (oxCartToEntanglementAddressesMemory.length - 1)) {
+                entanglementCut = getPercentageOf(hiatusValue, oxCartToEntanglementAddressToBasisPoints[_oxCartAddress][oxCartToEntanglementAddressesMemory[i]]);
             } else {
-                entanglementCut = (oxCartToToHiatusValue[_oxCartAddress] - entanglementCutsTotal);
+                entanglementCut = (hiatusValue - entanglementCutsTotal);
             }
             entanglementCutsTotal += entanglementCut;
-            (bool entanglementDeliverySuccess, ) = oxCartToEntanglementAddresses[_oxCartAddress][i].call{value: entanglementCut}("");
+            (bool entanglementDeliverySuccess, ) = oxCartToEntanglementAddressesMemory[i].call{value: entanglementCut}("");
             require(entanglementDeliverySuccess, "Entanglement cut delivery unsuccessful.");
         }
         oxCartToToHiatusValue[_oxCartAddress] = 0;

@@ -87,9 +87,7 @@ describe("GordianKnot Test Suite", function () {
           let newOxCartAndEntanglementTxResponse = await newOxCartAndEntanglementTx.wait();
           let oxCartAddress = newOxCartAndEntanglementTxResponse.events[3].args.oxCartAddress;
           let gordianKnotEvents = newOxCartAndEntanglementTxResponse.events.slice(0, 3);
-          console.log({gordianKnotEvents})
           for (let [index, event] of gordianKnotEvents.entries()) {
-            console.log({eventTopics: event.topics})
             await expect(ethers.utils.getAddress(ethers.utils.hexDataSlice(event.topics[1], 12))).to.equal(oxCartAddress);
             await expect(ethers.utils.getAddress(ethers.utils.hexDataSlice(event.topics[2], 12))).to.equal(entanglementAddresses[index]);
             await expect(Number(event.topics[3])).to.equal(entanglementAddressPortions[index]);

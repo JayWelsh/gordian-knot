@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 contract OxCart {
-  address gordianKnot;
+  address public gordianKnot;
 
   function initialize(address _gordianKnot) external {
     require(gordianKnot == address(0), "Already initialized");

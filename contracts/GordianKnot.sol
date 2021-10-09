@@ -29,7 +29,6 @@ contract GordianKnot {
         require(_entanglementAddresses.length > 0, "Length of _entanglementAddresses must be more than zero");
         require(_entanglementAddresses.length == _basisPoints.length, "Length of _entanglementAddresses and _basisPoints arrays must be equal");
         // Create new OxCart
-        // OxCart newOxCartContract = new OxCart(address(this));
         address newOxCartAddress = Clones.clone(referenceOxCart);
         IOxCart oxCart = IOxCart(newOxCartAddress);
         oxCart.initialize(address(this));

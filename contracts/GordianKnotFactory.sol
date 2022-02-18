@@ -7,11 +7,11 @@ contract GordianKnotFactory {
 
   event GordianKnotDeployed(address indexed knotDeployer, address indexed knotAddress);
 
-  function newGordianKnot() external returns(address) {
-      GordianKnot newGordianKnotContract = new GordianKnot();
-      address newGordianKnotAddress = address(newGordianKnotContract);
-      emit GordianKnotDeployed(msg.sender, newGordianKnotAddress);
-      return newGordianKnotAddress;
+  function newGordianKnot(address _referenceOxCart) external returns(address) {
+    GordianKnot newGordianKnotContract = new GordianKnot(_referenceOxCart);
+    address newGordianKnotAddress = address(newGordianKnotContract);
+    emit GordianKnotDeployed(msg.sender, newGordianKnotAddress);
+    return newGordianKnotAddress;
   }
 
 }

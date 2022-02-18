@@ -1,7 +1,8 @@
 //SPDX-License-Identifier: Unlicense
 pragma solidity ^0.8.0;
 
-import './OxCart.sol';
+import "@openzeppelin/contracts/proxy/Clones.sol";
+import './interfaces/IOxCart.sol';
 
 contract GordianKnot {
 
@@ -15,6 +16,12 @@ contract GordianKnot {
     mapping(address => mapping(address => uint16)) public oxCartToEntanglementAddressToBasisPoints;
     mapping(address => uint256) public oxCartToToHiatusValue;
 
+    address public referenceOxCart;
+
+    constructor(address _referenceOxCart) {
+        referenceOxCart = _referenceOxCart;
+    }
+
     function newOxCartAndEntanglement(
         address[] memory _entanglementAddresses,
         uint16[] memory _basisPoints
@@ -22,8 +29,9 @@ contract GordianKnot {
         require(_entanglementAddresses.length > 0, "Length of _entanglementAddresses must be more than zero");
         require(_entanglementAddresses.length == _basisPoints.length, "Length of _entanglementAddresses and _basisPoints arrays must be equal");
         // Create new OxCart
-        OxCart newOxCartContract = new OxCart(address(this));
-        address newOxCartAddress = address(newOxCartContract);
+        address newOxCartAddress = Clones.clone(referenceOxCart);
+        IOxCart oxCart = IOxCart(newOxCartAddress);
+        oxCart.initialize(address(this));
         // Create entanglement between OxCart and GordianKnot
         newEntanglement(newOxCartAddress, _entanglementAddresses, _basisPoints);
         emit OxCartAndEntanglementCreated(msg.sender, newOxCartAddress, address(this));
@@ -43,7 +51,7 @@ contract GordianKnot {
             emit NewEntanglement(_oxCartAddress, _entanglementAddresses[i], _basisPoints[i], _entanglementAddresses, _basisPoints);
         }
         require(totalBasisPoints == 10000, "_basisPoints must add up to 10000 together.");
-        oxCartToEntanglementAddresses[_oxCartAddress] = _entanglementAddresses; // Set this outside of the for loop to save gas
+        oxCartToEntanglementAddresses[_oxCartAddress] = _entanglementAddresses;
     }
 
     function fastenKnot(address _oxCartAddress) external {
@@ -52,6 +60,7 @@ contract GordianKnot {
         require(oxCartToEntanglementAddressesMemory.length > 0, "_oxCartAddress is not associated with an entanglement.");
         uint256 hiatusValue = oxCartToToHiatusValue[_oxCartAddress]; // Load into memory to save gas
         require(hiatusValue > 0, "Knot already fastened.");
+        oxCartToToHiatusValue[_oxCartAddress] = 0; // Before ETH transfers in case of re-entrancy
         uint256 entanglementCutsTotal;
         for(uint256 i = 0; i < oxCartToEntanglementAddressesMemory.length; i++) {
             uint256 entanglementCut;
@@ -64,7 +73,6 @@ contract GordianKnot {
             (bool entanglementDeliverySuccess, ) = oxCartToEntanglementAddressesMemory[i].call{value: entanglementCut}("");
             require(entanglementDeliverySuccess, "Entanglement cut delivery unsuccessful.");
         }
-        oxCartToToHiatusValue[_oxCartAddress] = 0;
         emit KnotFastened(_oxCartAddress, msg.sender);
     }
 

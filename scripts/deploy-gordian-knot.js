@@ -13,7 +13,15 @@ async function main() {
   // manually to make sure everything is compiled
   // await hre.run('compile');
 
-  // We get the contract to deploy
+  let [ deployer ] = await hre.ethers.getSigners();
+
+  // Deploy an OxCart to use for cloning
+  const OxCartClonable = await ethers.getContractFactory("OxCart");
+  const oxCartClonable = await OxCartClonable.deploy();
+
+  // Set the reference clone to forward funds to deployer address, as it should never be used but just as a precaution
+  await oxCartClonable.initialize(deployer.address);
+
   const GordianKnotFactory = await hre.ethers.getContractFactory("GordianKnotFactory");
   const gordianKnotFactory = await GordianKnotFactory.deploy();
 
@@ -21,7 +29,7 @@ async function main() {
 
   console.log("GordianKnotFactory deployed to:", gordianKnotFactory.address);
 
-  let tx = await gordianKnotFactory.newGordianKnot();
+  let tx = await gordianKnotFactory.newGordianKnot(oxCartClonable.address);
 
   let txReceipt = await tx.wait();
 

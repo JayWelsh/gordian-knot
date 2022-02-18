@@ -27,14 +27,92 @@ describe("GordianKnot Test Suite", function () {
 
   context("GordianKnotFactory.sol", async function () {
     it("Should allow a new GordianKnot to be created", async function () {
+
+      // Deploy an OxCart to use for cloning
+      const OxCartClonable = await ethers.getContractFactory("OxCart");
+      const oxCartClonable = await OxCartClonable.deploy();
+
       // Create a new Gordian Knot Factory and then a new Gordian Knot
       const GordianKnotFactory = await ethers.getContractFactory("GordianKnotFactory");
       const gordianKnotFactory = await GordianKnotFactory.deploy();
       await gordianKnotFactory.deployed();
 
       await expect(
-        gordianKnotFactory.newGordianKnot()
+        gordianKnotFactory.newGordianKnot(oxCartClonable.address)
       ).to.emit(gordianKnotFactory, "GordianKnotDeployed")
+
+    });
+
+  });
+
+  context("OxCart.sol", async function () {
+    it("Should allow a new OxCart to be created and initialized", async function () {
+
+      // Deploy an OxCart to use for cloning
+      const OxCartClonable = await ethers.getContractFactory("OxCart");
+      const oxCartClonable = await OxCartClonable.deploy();
+
+      // Create a new Gordian Knot Factory and then a new Gordian Knot
+      const GordianKnotFactory = await ethers.getContractFactory("GordianKnotFactory");
+      const gordianKnotFactory = await GordianKnotFactory.deploy();
+      await gordianKnotFactory.deployed();
+
+      let newGordianKnotTx = await gordianKnotFactory.newGordianKnot(oxCartClonable.address);
+
+      let newGordianKnotReturnData = await newGordianKnotTx.wait();
+
+      let newGordianKnotAddress = ethers.utils.getAddress(ethers.utils.hexStripZeros(newGordianKnotReturnData.logs[0].topics[2]));
+
+      await oxCartClonable.initialize(newGordianKnotAddress);
+
+      let initializedAddress = await oxCartClonable.gordianKnot();
+
+      await expect(initializedAddress).to.equal(newGordianKnotAddress);
+
+    });
+
+    it("Should not allow an OxCart to be initialized more than once", async function () {
+
+      // Deploy an OxCart to use for cloning
+      const OxCartClonable = await ethers.getContractFactory("OxCart");
+      const oxCartClonable = await OxCartClonable.deploy();
+
+      // Create a new Gordian Knot Factory and then a new Gordian Knot
+      const GordianKnotFactory = await ethers.getContractFactory("GordianKnotFactory");
+      const gordianKnotFactory = await GordianKnotFactory.deploy();
+      await gordianKnotFactory.deployed();
+
+      let newGordianKnotTx = await gordianKnotFactory.newGordianKnot(oxCartClonable.address);
+
+      let newGordianKnotReturnData = await newGordianKnotTx.wait();
+
+      let newGordianKnotAddress = ethers.utils.getAddress(ethers.utils.hexStripZeros(newGordianKnotReturnData.logs[0].topics[2]));
+
+      await oxCartClonable.initialize(newGordianKnotAddress);
+
+      let initializedAddress = await oxCartClonable.gordianKnot();
+
+      await expect(initializedAddress).to.equal(newGordianKnotAddress);
+
+      await expect(
+        oxCartClonable.initialize(newGordianKnotAddress)
+      ).to.be.revertedWith("Already initialized")
+
+    });
+
+    it("Should not accept a payment if it has not been initialized", async function () {
+
+      // Deploy an OxCart to use for cloning
+      const OxCartClonable = await ethers.getContractFactory("OxCart");
+      const oxCartClonable = await OxCartClonable.deploy();
+
+      // Send some funds to the ox cart
+      await expect(
+        patron.sendTransaction({
+          to: oxCartClonable.address,
+          value: ethers.utils.parseEther("10.0")
+        })
+      ).to.be.revertedWith("Not initialized")
 
     });
 
@@ -44,12 +122,15 @@ describe("GordianKnot Test Suite", function () {
 
     beforeEach(async () => {
 
+      // Deploy an OxCart to use for cloning
+      const OxCartClonable = await ethers.getContractFactory("OxCart");
+      const oxCartClonable = await OxCartClonable.deploy();
+
       // Create a new Gordian Knot Factory and then a new Gordian Knot
       const GordianKnotFactory = await ethers.getContractFactory("GordianKnotFactory");
       const gordianKnotFactory = await GordianKnotFactory.deploy();
-      await gordianKnotFactory.deployed();
 
-      let newGordianKnotTx = await gordianKnotFactory.newGordianKnot();
+      let newGordianKnotTx = await gordianKnotFactory.newGordianKnot(oxCartClonable.address);
 
       let newGordianKnotReturnData = await newGordianKnotTx.wait();
 
@@ -80,8 +161,8 @@ describe("GordianKnot Test Suite", function () {
           let oxCartAddress = newOxCartAndEntanglementTxResponse.events[3].args.oxCartAddress;
           let gordianKnotEvents = newOxCartAndEntanglementTxResponse.events.slice(0, 3);
           for (let [index, event] of gordianKnotEvents.entries()) {
-            await expect(ethers.utils.getAddress(ethers.utils.hexStripZeros(event.topics[1]))).to.equal(oxCartAddress);
-            await expect(ethers.utils.getAddress(ethers.utils.hexStripZeros(event.topics[2]))).to.equal(entanglementAddresses[index]);
+            await expect(ethers.utils.getAddress(ethers.utils.hexDataSlice(event.topics[1], 12))).to.equal(oxCartAddress);
+            await expect(ethers.utils.getAddress(ethers.utils.hexDataSlice(event.topics[2], 12))).to.equal(entanglementAddresses[index]);
             await expect(Number(event.topics[3])).to.equal(entanglementAddressPortions[index]);
           }
         })
@@ -197,6 +278,31 @@ describe("GordianKnot Test Suite", function () {
         await expect(
           gordianKnot.fastenKnot(oxCartAddress)
         ).to.be.revertedWith("Knot already fastened.");
+
+      });
+
+      it("Should revert if fastenKnot fails to deliver to an entanglement address", async function () {
+
+        // Deploy an OxCart and do not initialize it (any ETH delivery should fail)
+        const OxCartClonable = await ethers.getContractFactory("OxCart");
+        const oxCartClonable = await OxCartClonable.deploy();
+
+        let entanglementAddresses = [entanglement1.address, entanglement2.address, oxCartClonable.address];
+        let entanglementAddressPortions = [5000, 4000, 1000];
+        let newOxCartAndEntanglementTx = await gordianKnot.newOxCartAndEntanglement(entanglementAddresses, entanglementAddressPortions);
+        let newOxCartAndEntanglementTxResponse = await newOxCartAndEntanglementTx.wait();
+        let oxCartAddress = newOxCartAndEntanglementTxResponse.events[3].args.oxCartAddress;
+
+        // Send some funds to the ox cart
+        await patron.sendTransaction({
+          to: oxCartAddress,
+          value: ethers.utils.parseEther("10.0")
+        });
+
+        // Fasten the knot
+        await expect(
+          gordianKnot.fastenKnot(oxCartAddress)
+        ).to.be.revertedWith("Entanglement cut delivery unsuccessful.");
 
       });
 

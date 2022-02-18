@@ -34,7 +34,7 @@ The wording used throughout these contracts is mostly based on the story of the 
 
 - Funds in the GordianKnot are considered as being in `hiatus`, prior to entangled parties fastening the knot.
 
-There are four contracts which form part of this system, as follows:
+There are three contracts which form part of this system, as follows:
 
 
 ## GordianKnot.sol

@@ -1,8 +1,6 @@
 <br/>
 <p align="center">
-<a href="https://chain.link" target="_blank">
 <img src="https://vagabond.mypinata.cloud/ipfs/QmSuQLis1RXCy9xCDHWgdRmpCYwaCozuUFmMUqeFhrxH35" width="300" alt="Gordian Knot Logo">
-</a>
 </p>
 <br/>
 

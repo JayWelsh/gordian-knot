@@ -6,6 +6,8 @@
 
 # Gordian Knot
 
+## this project is deprecated, please make use of [0xsplits](https://www.0xsplits.xyz/) instead
+
 This is a smart-contract-based approach towards making it possible for multiple separate parties to accept portions of ETH transfers which are made to a single address, without any single individual taking custody or ownership of the full amount of ETH.
 
 E.g. Alice and Bob have an agreement with eachother to each receive 50% of an ETH payment, the patron of the payment can be given a single ETH address to make a single transaction to, and Alice and Bob may subsequently each claim their own individual portion of the payment.
